@@ -1,1 +1,24 @@
+# Dockerfile Multistage para Maven
+
+# Etapa de construcción y pruebas
+FROM maven:latest AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+COPY src src
+RUN mvn test
+
+# Etapa de compilación y empaquetado
+FROM maven:latest AS final
+WORKDIR /app
+COPY --from=build /app .
+RUN mvn package -DskipTests
+
+# Etapa de ejecución
+FROM openjdk:11-jre-slim
+WORKDIR /app
+COPY --from=final /app/target/your-microservice.jar .
+EXPOSE 8080
+CMD ["java", "-jar", "your-microservice.jar"]
 
